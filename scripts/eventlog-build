@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+"""usage: eventlog-build [--directory DIRECTORY] [--repo URL] [--branch BRANCH] [ --quiet | --verbose ] ACTION ELEMENT
+
+  -h --help                   Show this
+  -r --repo URL               Set the repo to build [default: https://github.com/balabit/eventlog]
+  -b --branch BRANCH          Set the branch [default: master]
+  -d --directory DIRECTORY    Directory container the packages builded [default: ./]
+  --quiet                     Print the minimal output
+  --verbose                   Print each logged step
+  --version                   Print the version of this command
+"""
+
+from __future__ import print_function
+
+import os
+import ipaddress
+import logging
+import eventbuild
+import json
+
+from docopt import docopt
+from docker import Client, tls
+
+from eventbuild import container
+
+IMAGE_NAME="eventlog-package"
+DOCKERFILE_PATH=os.path.dirname((os.path.abspath(eventbuild.__file__)))
+
+try:
+  host = os.getenv('DOCKER_HOST')
+  tls_config = tls.TLSConfig(ca_cert=os.getenv('DOCKER_CERT_PATH'))
+
+  docker = Client(base_url=host, tls=tls_config)
+  logging.debug("Using connection with docker throw IP")
+except:
+  docker = Client(base_url='unix://var/run/docker.sock')
+  logging.debug("Using local socket connection")
+
+def show_output(json_parse=False):
+  def recive_func(func):
+    if json_parse:
+      def log_output(*args, **kwargs):
+        logs = func(*args, **kwargs)
+        for entry in logs:
+          parse_entry = json.loads(entry)
+
+          if 'stream' in parse_entry.keys():
+            print(parse_entry['stream'], end='')
+    else:
+      def log_output(*args, **kwargs):
+        logs = func(*args, **kwargs)
+
+        for entry in logs:
+          print(entry, end='')
+
+    return log_output
+
+  return recive_func
+
+
+@show_output(json_parse=True)
+def build_image():
+  return container.build(docker,
+                        DOCKERFILE_PATH, 
+                        pull=True, rm=True, tag=IMAGE_NAME)
+@show_output(json_parse=False)
+def run_container(destination_path):
+  return container.run(docker, IMAGE_NAME, destination_path)
+  
+
+if __name__ == "__main__":
+  args = docopt(__doc__, version="0.0.1")
+
+  if args['ACTION'] == "build":
+    if args['ELEMENT'] == "image":
+      logging.debug("Build image based on DOckerfile")
+      build_image()
+    else:
+      logging.error(args['ELEMENT'] + 
+                    " doesn't has the action " + args['ACTION'])
+      exit(-1)
+
+  if args['ACTION'] == "package":
+    if args['ELEMENT'] == "repo":
+      logging.debug("run container to package the given repo")
+      run_container(args['--directory'])
+    else:
+      logging.error(args['ELEMENT'] + 
+                    " doesn't has the action " + args['ACTION'])
+      exit(-1)
+
