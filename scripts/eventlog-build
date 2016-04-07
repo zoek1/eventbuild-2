@@ -80,15 +80,15 @@ if __name__ == "__main__":
 
   if args['ACTION'] == "build":
     if args['ELEMENT'] == "image":
-      logging.debug("Build image based on DOckerfile")
+      logging.debug("Build image based on Dockerfile")
       build_image()
-      return 0
+      exit(0)
 
   if args['ACTION'] == "package":
     if args['ELEMENT'] == "repo":
       logging.debug("run container to package the given repo")
       run_container(args['--directory'])
-      return 0
+      exit(0)
 
   if args['ACTION'] == "publish":
     if args['ELEMENT'] == "draft":
@@ -116,10 +116,10 @@ if __name__ == "__main__":
       if status != 200:
         logging.error(data)
         print("Algo a salido mal")
-        return -1
+        exit(-1)
 
-      return 0
+      exit(0)
 
   logging.error(args['ELEMENT'] + 
                 " doesn't has the action " + args['ACTION'])
-  return -1
+  exit(-1)
