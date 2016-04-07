@@ -10,7 +10,8 @@ Please use virtualenv with python version 2, i don't tested with python 3.
 $ python setup.py install
 ```
 
-<script type="text/javascript" src="https://asciinema.org/a/41547.js" id="asciicast-41547" async></script>
+[![asciicast](https://asciinema.org/a/41547.png)](https://asciinema.org/a/41547)
+
 
 ## Usage
 
@@ -35,6 +36,6 @@ Overview of the current release:
 release 0.2.14
 ```
 
-<script type="text/javascript" src="https://asciinema.org/a/41550.js" id="asciicast-41550" async></script>
+[![asciicast](https://asciinema.org/a/41547.png)](https://asciinema.org/a/41547)
 
 ### Status: Alpha (heavy development)
