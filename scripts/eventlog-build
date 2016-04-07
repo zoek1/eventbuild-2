@@ -15,7 +15,6 @@
 from __future__ import print_function
 
 import os
-import ipaddress
 import logging
 import eventbuild
 import json
@@ -87,7 +86,7 @@ if __name__ == "__main__":
   if args['ACTION'] == "package":
     if args['ELEMENT'] == "repo":
       logging.debug("run container to package the given repo")
-      run_container(args['--directory'])
+      run_container(args['--directory'], args['--repo'])
       exit(0)
 
   if args['ACTION'] == "publish":
