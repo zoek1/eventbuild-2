@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-"""usage: eventlog-build [--directory DIRECTORY] [--repo URL] [--branch BRANCH] [ --quiet | --verbose ] ACTION ELEMENT
+"""usage: eventlog-build [--user USER] [--directory DIRECTORY] [--repo URL] [ --quiet | --verbose ] ACTION ELEMENT
 
   -h --help                   Show this
   -r --repo URL               Set the repo to build [default: https://github.com/balabit/eventlog]
   -b --branch BRANCH          Set the branch [default: master]
   -d --directory DIRECTORY    Directory container the packages builded [default: ./]
+  -u --user USER              User to publish draft on github                    
   --quiet                     Print the minimal output
   --verbose                   Print each logged step
   --version                   Print the version of this command
@@ -18,11 +19,16 @@ import ipaddress
 import logging
 import eventbuild
 import json
+import fileinput
+import getpass
+import github
 
 from docopt import docopt
 from docker import Client, tls
 
 from eventbuild import container
+from eventbuild import changelog as Changelog
+
 
 IMAGE_NAME="eventlog-package"
 DOCKERFILE_PATH=os.path.dirname((os.path.abspath(eventbuild.__file__)))
@@ -90,3 +96,29 @@ if __name__ == "__main__":
                     " doesn't has the action " + args['ACTION'])
       exit(-1)
 
+  if args['ACTION'] == "publish":
+    if args['ELEMENT'] == "draft":
+      logging.debug("publishing draft the given repo")
+
+      user = args['--user']
+      pwd = ''
+      msg = ''
+
+      while pwd == '':
+        pwd = getpass.getpass()
+      
+      print('Overview of the current release: ')
+      while msg == '':
+        msg = raw_input()
+
+      gh = github.Github(user, pwd)
+      repo_row = args['--repo'].replace('https://github.com/', '')
+      repo = gh.get_repo(repo_row)
+      user = repo.owner
+      path = 'ChangeLog'
+      
+      Changelog.update_changelog(gh, repo, user, msg, path)
+    else:
+      logging.error(args['ELEMENT'] + 
+                    " doesn't has the action " + args['ACTION'])
+      exit(-1)
